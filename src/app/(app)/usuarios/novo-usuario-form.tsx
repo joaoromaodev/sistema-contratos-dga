@@ -77,7 +77,7 @@ export function NovoUsuarioForm() {
               <NativeSelect id="papel" name="papel" required defaultValue="TECNICO_CCON">
                 <option value="TECNICO_CCON">Técnico CCON</option>
                 <option value="COORDENADOR_CCON">Coordenador CCON</option>
-                <option value="DIRETOR">Diretor (visualização)</option>
+                <option value="DIRETOR">Diretor</option>
               </NativeSelect>
             </div>
             {state?.error && (

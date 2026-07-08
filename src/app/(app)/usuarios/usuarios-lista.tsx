@@ -59,7 +59,7 @@ function LinhaUsuario({
         >
           <option value="TECNICO_CCON">Técnico CCON</option>
           <option value="COORDENADOR_CCON">Coordenador CCON</option>
-          <option value="DIRETOR">Diretor (visualização)</option>
+          <option value="DIRETOR">Diretor</option>
         </NativeSelect>
       </TableCell>
       <TableCell>
