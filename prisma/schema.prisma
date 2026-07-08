@@ -1,0 +1,214 @@
+// Schema do Módulo CCON (Coordenadoria de Contratos e Convênios) - DGA
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// As 8 categorias de instrumento geridas pelo CCON
+enum TipoInstrumento {
+  AQUISICAO
+  EMPREITADA_GLOBAL
+  LOCACAO_IMOVEL
+  PRESTACAO_SERVICOS
+  CESSAO_RECIPROCA
+  ENGENHARIA_DIVERSOS
+  PARCERIA_ENTIDADE_PUBLICA
+  PARCERIA_OSC
+}
+
+/// Natureza jurídica do instrumento - determina a legislação aplicável e os
+/// filtros de alto nível ("Contratos" x "Convênios e Parcerias")
+enum InstrumentoJuridico {
+  CONTRATO_ADMINISTRATIVO
+  CONVENIO
+  ACORDO_COOPERACAO_TECNICA
+  TERMO_EXECUCAO_DESCENTRALIZADA
+  TERMO_PARCERIA
+}
+
+/// De onde vem a numeração do instrumento: processo formal (SEI/PAE) ou
+/// demanda direta do Gabinete do Secretário sem processo aberto (ex: "001 GAB")
+enum OrigemNumero {
+  PROCESSO
+  GABINETE
+}
+
+enum ContraparteTipo {
+  PESSOA_JURIDICA_PRIVADA
+  PESSOA_FISICA
+  MUNICIPIO
+  ORGAO_PUBLICO
+  OSC
+}
+
+/// Situação vigente/próximo a vencer/vencido é CALCULADA dinamicamente a
+/// partir da data de vigência - não é armazenada. Este enum é a única
+/// situação gravada, e só muda por ação manual de um usuário autorizado.
+enum SituacaoAdministrativa {
+  ATIVO
+  ENCERRADO
+}
+
+enum TipoValor {
+  VALOR_UNICO
+  MENSAL
+  ANUAL
+  GLOBAL
+  PARTE_SEDUC
+  PARTE_ENTIDADE
+}
+
+enum TipoAditivo {
+  PRAZO
+  VALOR
+  PRAZO_E_VALOR
+  QUALITATIVO
+}
+
+enum PapelUsuario {
+  DIRETOR
+  COORDENADOR_CCON
+  TECNICO_CCON
+}
+
+// ---------------------------------------------------------------------------
+// Modelos
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id        String       @id @default(cuid())
+  authId    String       @unique // id do usuário no Supabase Auth
+  nome      String
+  email     String       @unique
+  papel     PapelUsuario
+  ativo     Boolean      @default(true)
+  criadoEm  DateTime     @default(now())
+
+  contratosCriados     Contrato[]           @relation("ContratoCriadoPor")
+  contratosAtualizados Contrato[]           @relation("ContratoAtualizadoPor")
+  historicoAlteracoes  HistoricoAlteracao[]
+
+  @@map("usuarios")
+}
+
+model Contrato {
+  id                    String                 @id @default(cuid())
+  numeroSequencial      Int                     @default(autoincrement())
+  codigoIdentificacao   String                  @unique // ex: CCON-2026-0001
+
+  tipoInstrumento       TipoInstrumento
+  instrumentoJuridico   InstrumentoJuridico
+
+  origemNumero          OrigemNumero
+  numeroProcesso        String // aceita "2021/940713" (processo) ou "001 GAB" (gabinete)
+  numeroInstrumento     String?
+
+  contraparteNome       String
+  contraparteDocumento  String? // CNPJ ou CPF
+  contraparteTipo       ContraparteTipo
+
+  objeto                String
+
+  modalidadeLicitacao   String? // N/A para convênios/parcerias
+
+  dataInicioVigencia    DateTime
+  dataFimVigenciaAtual  DateTime
+
+  situacaoAdministrativa SituacaoAdministrativa @default(ATIVO)
+
+  publicacaoDiarioOficial DateTime?
+
+  observacoesPendencias String?
+
+  criadoEm   DateTime @default(now())
+  criadoPorId String?
+  criadoPor   Usuario? @relation("ContratoCriadoPor", fields: [criadoPorId], references: [id])
+
+  atualizadoEm     DateTime @updatedAt
+  atualizadoPorId  String?
+  atualizadoPor    Usuario? @relation("ContratoAtualizadoPor", fields: [atualizadoPorId], references: [id])
+
+  valores             ContratoValor[]
+  aditivos            Aditivo[]
+  historicoAlteracoes HistoricoAlteracao[]
+
+  @@index([tipoInstrumento])
+  @@index([instrumentoJuridico])
+  @@index([situacaoAdministrativa])
+  @@index([dataFimVigenciaAtual])
+  @@map("contratos")
+}
+
+model ContratoValor {
+  id           String    @id @default(cuid())
+  contratoId   String
+  contrato     Contrato  @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  tipoValor    TipoValor
+  valorInicial Decimal?  @db.Decimal(14, 2)
+  valorAtual   Decimal?  @db.Decimal(14, 2)
+
+  @@index([contratoId])
+  @@map("contrato_valores")
+}
+
+/// Histórico de aditivos. Um novo aditivo substitui a data/valor vigente do
+/// contrato (campos dataFimVigenciaAtual / ContratoValor.valorAtual), mas o
+/// registro anterior é preservado aqui para consulta no detalhamento do
+/// contrato (não aparece na listagem principal).
+model Aditivo {
+  id                   String      @id @default(cuid())
+  contratoId           String
+  contrato             Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  numeroSequencial     Int
+  tipo                 TipoAditivo
+  dataAssinatura       DateTime
+  novaDataFimVigencia  DateTime?
+  novoValor            Decimal?    @db.Decimal(14, 2)
+  descricao            String?
+
+  criadoEm             DateTime    @default(now())
+
+  @@unique([contratoId, numeroSequencial])
+  @@map("aditivos")
+}
+
+model HistoricoAlteracao {
+  id             String   @id @default(cuid())
+  contratoId     String
+  contrato       Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  usuarioId      String?
+  usuario        Usuario? @relation(fields: [usuarioId], references: [id])
+
+  campoAlterado  String
+  valorAnterior  String?
+  valorNovo      String?
+
+  dataHora       DateTime @default(now())
+
+  @@index([contratoId])
+  @@map("historico_alteracoes")
+}
+
+/// Configuração dos limiares de alerta de vencimento, editável na interface
+/// por Coordenador/Diretor. tipoInstrumento nulo = configuração padrão global.
+model ConfiguracaoAlerta {
+  id              String           @id @default(cuid())
+  tipoInstrumento TipoInstrumento?
+  diasAlerta      Int              @default(150)
+
+  @@unique([tipoInstrumento])
+  @@map("configuracoes_alerta")
+}
