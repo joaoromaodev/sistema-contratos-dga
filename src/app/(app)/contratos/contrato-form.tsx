@@ -10,42 +10,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  TIPO_INSTRUMENTO_LABEL,
-  INSTRUMENTO_JURIDICO_LABEL,
-  CONTRAPARTE_TIPO_LABEL,
   TIPO_VALOR_LABEL,
-  VALORES_POR_TIPO,
-  INSTRUMENTO_JURIDICO_SUGERIDO,
-  EXIGE_MODALIDADE_LICITACAO,
+  valoresPara,
+  instrumentoJuridicoSugeridoPara,
+  exigeModalidadePara,
 } from "@/lib/constantes-contrato";
 import { salvarContrato, type ContratoFormState } from "./actions";
-import type {
-  TipoInstrumento,
-  InstrumentoJuridico,
-  OrigemNumero,
-  ContraparteTipo,
-  TipoValor,
-} from "@/generated/prisma/enums";
+import type { OrigemNumero, TipoValor } from "@/generated/prisma/enums";
+
+type Opcao = { codigo: string; rotulo: string };
 
 type ValorInicial = { tipoValor: TipoValor; valorInicial: number | null; valorAtual: number | null };
 
 export type ContratoFormInitialValues = {
   id?: string;
-  tipoInstrumento?: TipoInstrumento;
-  instrumentoJuridico?: InstrumentoJuridico;
+  tipoInstrumento?: string;
+  instrumentoJuridico?: string;
   origemNumero?: OrigemNumero;
   numeroProcesso?: string;
   numeroInstrumento?: string | null;
   contraparteNome?: string;
-  contraparteTipo?: ContraparteTipo;
+  contraparteTipo?: string;
   contraparteDocumento?: string | null;
   objeto?: string;
   modalidadeLicitacao?: string | null;
+  numeroLicitacao?: string | null;
   dataInicioVigencia?: string;
   dataFimVigenciaAtual?: string;
   publicacaoDiarioOficial?: string | null;
   observacoesPendencias?: string | null;
   valores?: ValorInicial[];
+};
+
+export type ContratoFormOpcoes = {
+  tipoInstrumento: Opcao[];
+  instrumentoJuridico: Opcao[];
+  contraparteTipo: Opcao[];
+  modalidadeLicitacao: Opcao[];
 };
 
 function toDateInputValue(value?: string | null) {
@@ -55,18 +56,20 @@ function toDateInputValue(value?: string | null) {
 
 export function ContratoForm({
   initialValues,
+  opcoes,
 }: {
   initialValues?: ContratoFormInitialValues;
+  opcoes: ContratoFormOpcoes;
 }) {
   const [state, action, pending] = useActionState<ContratoFormState, FormData>(
     salvarContrato,
     undefined
   );
 
-  const [tipoInstrumento, setTipoInstrumento] = useState<TipoInstrumento | "">(
+  const [tipoInstrumento, setTipoInstrumento] = useState<string>(
     initialValues?.tipoInstrumento ?? ""
   );
-  const [instrumentoJuridico, setInstrumentoJuridico] = useState<InstrumentoJuridico | "">(
+  const [instrumentoJuridico, setInstrumentoJuridico] = useState<string>(
     initialValues?.instrumentoJuridico ?? ""
   );
   const [origemNumero, setOrigemNumero] = useState<OrigemNumero>(
@@ -98,17 +101,17 @@ export function ContratoForm({
               required
               value={tipoInstrumento}
               onChange={(e) => {
-                const novoTipo = e.target.value as TipoInstrumento;
+                const novoTipo = e.target.value;
                 setTipoInstrumento(novoTipo);
-                setInstrumentoJuridico(INSTRUMENTO_JURIDICO_SUGERIDO[novoTipo]);
+                setInstrumentoJuridico(instrumentoJuridicoSugeridoPara(novoTipo));
               }}
             >
               <option value="" disabled>
                 Selecione...
               </option>
-              {Object.entries(TIPO_INSTRUMENTO_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {opcoes.tipoInstrumento.map((o) => (
+                <option key={o.codigo} value={o.codigo}>
+                  {o.rotulo}
                 </option>
               ))}
             </NativeSelect>
@@ -124,16 +127,14 @@ export function ContratoForm({
               name="instrumentoJuridico"
               required
               value={instrumentoJuridico}
-              onChange={(e) =>
-                setInstrumentoJuridico(e.target.value as InstrumentoJuridico)
-              }
+              onChange={(e) => setInstrumentoJuridico(e.target.value)}
             >
               <option value="" disabled>
                 Selecione...
               </option>
-              {Object.entries(INSTRUMENTO_JURIDICO_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {opcoes.instrumentoJuridico.map((o) => (
+                <option key={o.codigo} value={o.codigo}>
+                  {o.rotulo}
                 </option>
               ))}
             </NativeSelect>
@@ -193,11 +194,11 @@ export function ContratoForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Contraparte e Objeto</CardTitle>
+          <CardTitle>Credor e Objeto</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="contraparteTipo">Tipo de contraparte *</Label>
+            <Label htmlFor="contraparteTipo">Tipo de credor *</Label>
             <NativeSelect
               id="contraparteTipo"
               name="contraparteTipo"
@@ -207,9 +208,9 @@ export function ContratoForm({
               <option value="" disabled>
                 Selecione...
               </option>
-              {Object.entries(CONTRAPARTE_TIPO_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
+              {opcoes.contraparteTipo.map((o) => (
+                <option key={o.codigo} value={o.codigo}>
+                  {o.rotulo}
                 </option>
               ))}
             </NativeSelect>
@@ -225,9 +226,7 @@ export function ContratoForm({
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="contraparteNome">
-              Nome da contratada/locador/município/entidade/OSC *
-            </Label>
+            <Label htmlFor="contraparteNome">Credor *</Label>
             <Input
               id="contraparteNome"
               name="contraparteNome"
@@ -253,16 +252,33 @@ export function ContratoForm({
             )}
           </div>
 
-          {tipoInstrumento && EXIGE_MODALIDADE_LICITACAO[tipoInstrumento] && (
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="modalidadeLicitacao">Modalidade de licitação</Label>
-              <Input
-                id="modalidadeLicitacao"
-                name="modalidadeLicitacao"
-                placeholder="ex: Pregão Eletrônico nº 010/2016"
-                defaultValue={initialValues?.modalidadeLicitacao ?? ""}
-              />
-            </div>
+          {tipoInstrumento && exigeModalidadePara(tipoInstrumento) && (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="modalidadeLicitacao">Modalidade de licitação</Label>
+                <NativeSelect
+                  id="modalidadeLicitacao"
+                  name="modalidadeLicitacao"
+                  defaultValue={initialValues?.modalidadeLicitacao ?? ""}
+                >
+                  <option value="">Selecione...</option>
+                  {opcoes.modalidadeLicitacao.map((o) => (
+                    <option key={o.codigo} value={o.codigo}>
+                      {o.rotulo}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="numeroLicitacao">Número da licitação</Label>
+                <Input
+                  id="numeroLicitacao"
+                  name="numeroLicitacao"
+                  placeholder="ex: 010/2026"
+                  defaultValue={initialValues?.numeroLicitacao ?? ""}
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -301,7 +317,7 @@ export function ContratoForm({
           </div>
 
           {tipoInstrumento &&
-            VALORES_POR_TIPO[tipoInstrumento].map((tipoValor) => {
+            valoresPara(tipoInstrumento).map((tipoValor) => {
               const inicial = valoresIniciais.get(tipoValor);
               return (
                 <div key={tipoValor} className="contents">

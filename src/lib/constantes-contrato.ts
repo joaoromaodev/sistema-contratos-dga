@@ -1,36 +1,15 @@
-import type {
-  TipoInstrumento,
-  InstrumentoJuridico,
-  ContraparteTipo,
-  TipoValor,
-} from "@/generated/prisma/enums";
+import type { TipoValor } from "@/generated/prisma/enums";
 
-export const TIPO_INSTRUMENTO_LABEL: Record<TipoInstrumento, string> = {
-  AQUISICAO: "Aquisição",
-  EMPREITADA_GLOBAL: "Empreitada Global",
-  LOCACAO_IMOVEL: "Locação de Imóvel",
-  PRESTACAO_SERVICOS: "Prestação de Serviços",
-  CESSAO_RECIPROCA: "Cessão Recíproca",
-  ENGENHARIA_DIVERSOS: "Engenharia e Diversos",
-  PARCERIA_ENTIDADE_PUBLICA: "Parceria com Entidade Pública",
-  PARCERIA_OSC: "Parceria com OSC",
-};
-
-export const INSTRUMENTO_JURIDICO_LABEL: Record<InstrumentoJuridico, string> = {
-  CONTRATO_ADMINISTRATIVO: "Contrato Administrativo",
-  CONVENIO: "Convênio",
-  ACORDO_COOPERACAO_TECNICA: "Acordo de Cooperação Técnica",
-  TERMO_EXECUCAO_DESCENTRALIZADA: "Termo de Execução Descentralizada",
-  TERMO_PARCERIA: "Termo de Parceria",
-};
-
-export const CONTRAPARTE_TIPO_LABEL: Record<ContraparteTipo, string> = {
-  PESSOA_JURIDICA_PRIVADA: "Pessoa Jurídica Privada",
-  PESSOA_FISICA: "Pessoa Física",
-  MUNICIPIO: "Município",
-  ORGAO_PUBLICO: "Órgão Público",
-  OSC: "Organização da Sociedade Civil (OSC)",
-};
+// Os rótulos de tipo de instrumento, natureza jurídica, tipo de credor e
+// modalidade de licitação NÃO ficam mais fixos aqui - são configuráveis pela
+// tela de Configurações e vivem na tabela opcoes_lista (ver src/lib/opcoes.ts).
+//
+// As regras abaixo (estrutura de valores, sugestão de natureza jurídica e
+// exigência de modalidade) continuam fixas no código por serem regras de
+// negócio, não apenas rótulos. Para os 8 tipos padrão do CCON elas são
+// específicas; para um tipo novo criado na tela de Configurações, aplica-se
+// um padrão genérico razoável (ver funções `valoresPara`, `instrumentoJuridicoSugeridoPara`,
+// `exigeModalidadePara`).
 
 export const TIPO_VALOR_LABEL: Record<TipoValor, string> = {
   VALOR_UNICO: "Valor",
@@ -38,11 +17,11 @@ export const TIPO_VALOR_LABEL: Record<TipoValor, string> = {
   ANUAL: "Valor Anual",
   GLOBAL: "Valor Global",
   PARTE_SEDUC: "Valor - Parte SEDUC",
-  PARTE_ENTIDADE: "Valor - Parte Entidade/Contraparte",
+  PARTE_ENTIDADE: "Valor - Parte Credor",
 };
 
 /** Estrutura de valores esperada por tipo de instrumento (para montar o formulário) */
-export const VALORES_POR_TIPO: Record<TipoInstrumento, TipoValor[]> = {
+const VALORES_POR_TIPO: Record<string, TipoValor[]> = {
   AQUISICAO: ["VALOR_UNICO"],
   EMPREITADA_GLOBAL: ["GLOBAL"],
   LOCACAO_IMOVEL: ["MENSAL", "ANUAL"],
@@ -52,9 +31,14 @@ export const VALORES_POR_TIPO: Record<TipoInstrumento, TipoValor[]> = {
   PARCERIA_ENTIDADE_PUBLICA: ["PARTE_SEDUC", "PARTE_ENTIDADE"],
   PARCERIA_OSC: ["PARTE_SEDUC", "PARTE_ENTIDADE"],
 };
+const VALORES_PADRAO: TipoValor[] = ["VALOR_UNICO"];
+
+export function valoresPara(tipoInstrumento: string): TipoValor[] {
+  return VALORES_POR_TIPO[tipoInstrumento] ?? VALORES_PADRAO;
+}
 
 /** Sugestão automática de natureza jurídica ao escolher o tipo (usuário pode alterar) */
-export const INSTRUMENTO_JURIDICO_SUGERIDO: Record<TipoInstrumento, InstrumentoJuridico> = {
+const INSTRUMENTO_JURIDICO_SUGERIDO: Record<string, string> = {
   AQUISICAO: "CONTRATO_ADMINISTRATIVO",
   EMPREITADA_GLOBAL: "CONTRATO_ADMINISTRATIVO",
   LOCACAO_IMOVEL: "CONTRATO_ADMINISTRATIVO",
@@ -64,9 +48,14 @@ export const INSTRUMENTO_JURIDICO_SUGERIDO: Record<TipoInstrumento, InstrumentoJ
   PARCERIA_ENTIDADE_PUBLICA: "ACORDO_COOPERACAO_TECNICA",
   PARCERIA_OSC: "TERMO_PARCERIA",
 };
+const INSTRUMENTO_JURIDICO_PADRAO = "CONVENIO";
+
+export function instrumentoJuridicoSugeridoPara(tipoInstrumento: string): string {
+  return INSTRUMENTO_JURIDICO_SUGERIDO[tipoInstrumento] ?? INSTRUMENTO_JURIDICO_PADRAO;
+}
 
 /** Se o tipo exige modalidade de licitação (contratos formais) */
-export const EXIGE_MODALIDADE_LICITACAO: Record<TipoInstrumento, boolean> = {
+const EXIGE_MODALIDADE_LICITACAO: Record<string, boolean> = {
   AQUISICAO: true,
   EMPREITADA_GLOBAL: true,
   LOCACAO_IMOVEL: true,
@@ -76,3 +65,15 @@ export const EXIGE_MODALIDADE_LICITACAO: Record<TipoInstrumento, boolean> = {
   PARCERIA_ENTIDADE_PUBLICA: false,
   PARCERIA_OSC: false,
 };
+
+export function exigeModalidadePara(tipoInstrumento: string): boolean {
+  return EXIGE_MODALIDADE_LICITACAO[tipoInstrumento] ?? false;
+}
+
+/** Categorias/rótulos das listas configuráveis, exibidos na tela de Configurações */
+export const CATEGORIA_OPCAO_LABEL = {
+  TIPO_INSTRUMENTO: "Tipo de Instrumento",
+  INSTRUMENTO_JURIDICO: "Natureza Jurídica",
+  CONTRAPARTE_TIPO: "Tipo de Credor",
+  MODALIDADE_LICITACAO: "Modalidade de Licitação",
+} as const;

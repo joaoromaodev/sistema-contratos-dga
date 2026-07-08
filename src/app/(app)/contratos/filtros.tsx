@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TIPO_INSTRUMENTO_LABEL } from "@/lib/constantes-contrato";
 
 const STATUS_OPTIONS = [
   { value: "TODOS", label: "Todos (exceto encerrados)" },
@@ -24,14 +23,10 @@ const STATUS_OPTIONS = [
 
 const ORDENAR_OPTIONS = [
   { value: "vigencia", label: "Vigência (mais próxima primeiro)" },
-  { value: "contraparte", label: "Contraparte (A-Z)" },
+  { value: "contraparte", label: "Credor (A-Z)" },
   { value: "recente", label: "Cadastro mais recente" },
 ];
 
-const TIPO_LABEL: Record<string, string> = {
-  TODOS: "Todos os tipos",
-  ...TIPO_INSTRUMENTO_LABEL,
-};
 const STATUS_LABEL: Record<string, string> = Object.fromEntries(
   STATUS_OPTIONS.map((o) => [o.value, o.label])
 );
@@ -39,7 +34,15 @@ const ORDENAR_LABEL: Record<string, string> = Object.fromEntries(
   ORDENAR_OPTIONS.map((o) => [o.value, o.label])
 );
 
-export function ContratosFiltros() {
+export function ContratosFiltros({
+  tiposInstrumento,
+}: {
+  tiposInstrumento: { codigo: string; rotulo: string }[];
+}) {
+  const tipoLabel: Record<string, string> = {
+    TODOS: "Todos os tipos",
+    ...Object.fromEntries(tiposInstrumento.map((o) => [o.codigo, o.rotulo])),
+  };
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -67,7 +70,7 @@ export function ContratosFiltros() {
       <div className="relative w-full sm:max-w-xs">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por objeto, contraparte, processo..."
+          placeholder="Buscar por objeto, credor, processo..."
           className="pl-8"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
@@ -84,14 +87,14 @@ export function ContratosFiltros() {
       >
         <SelectTrigger className="w-full sm:w-56">
           <SelectValue placeholder="Tipo de instrumento">
-            {(value: string) => TIPO_LABEL[value] ?? "Todos os tipos"}
+            {(value: string) => tipoLabel[value] ?? "Todos os tipos"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="TODOS">Todos os tipos</SelectItem>
-          {Object.entries(TIPO_INSTRUMENTO_LABEL).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
+          {tiposInstrumento.map((o) => (
+            <SelectItem key={o.codigo} value={o.codigo}>
+              {o.rotulo}
             </SelectItem>
           ))}
         </SelectContent>

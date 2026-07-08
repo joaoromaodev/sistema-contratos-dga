@@ -19,10 +19,9 @@ import {
 import { getDiasAlerta, calcularStatusVigencia } from "@/lib/status";
 import { StatusBadge } from "@/components/contratos/status-badge";
 import { ContratosFiltros } from "./filtros";
-import { TIPO_INSTRUMENTO_LABEL } from "@/lib/constantes-contrato";
+import { mapaRotulos, listarOpcoes } from "@/lib/opcoes";
 import { formatarMoeda, valorReferencia } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import type { TipoInstrumento } from "@/generated/prisma/enums";
 
 const CATEGORIA_TABS: { value: Categoria | "todos"; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -40,14 +39,18 @@ export default async function ContratosPage({
 
   const { contratos, total, pagina, totalPaginas } = await listarContratos({
     categoria,
-    tipoInstrumento: sp.tipoInstrumento as TipoInstrumento | undefined,
+    tipoInstrumento: sp.tipoInstrumento,
     busca: sp.busca,
     status: sp.status as StatusFiltro | undefined,
     ordenarPor: sp.ordenarPor as OrdenarPor | undefined,
     pagina: sp.pagina ? Number(sp.pagina) : undefined,
   });
 
-  const diasAlertaPadrao = await getDiasAlerta();
+  const [diasAlertaPadrao, tipoInstrumentoLabel, tiposInstrumento] = await Promise.all([
+    getDiasAlerta(),
+    mapaRotulos("TIPO_INSTRUMENTO"),
+    listarOpcoes("TIPO_INSTRUMENTO"),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
@@ -91,15 +94,17 @@ export default async function ContratosPage({
         })}
       </div>
 
-      <ContratosFiltros />
+      <ContratosFiltros
+        tiposInstrumento={tiposInstrumento.map((o) => ({ codigo: o.codigo, rotulo: o.rotulo }))}
+      />
 
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
+              <TableHead>Contrato/Convênio</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Contraparte</TableHead>
+              <TableHead>Credor</TableHead>
               <TableHead>Objeto</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Situação</TableHead>
@@ -129,11 +134,11 @@ export default async function ContratosPage({
                       href={`/contratos/${contrato.id}`}
                       className="hover:underline"
                     >
-                      {contrato.codigoIdentificacao}
+                      {contrato.numeroInstrumento || contrato.numeroProcesso}
                     </Link>
                   </TableCell>
                   <TableCell>
-                    {TIPO_INSTRUMENTO_LABEL[contrato.tipoInstrumento]}
+                    {tipoInstrumentoLabel[contrato.tipoInstrumento] ?? contrato.tipoInstrumento}
                   </TableCell>
                   <TableCell className="max-w-48 truncate">
                     {contrato.contraparteNome}

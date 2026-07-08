@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { TipoInstrumento } from "@/generated/prisma/enums";
 
 export const DIAS_ALERTA_PADRAO = 150;
 
@@ -13,7 +12,7 @@ const cacheAlertas = new Map<string, number>();
 
 /** Busca (com cache em memória do processo) o limiar de dias de alerta configurado para o tipo, ou o padrão global/hardcoded. */
 export async function getDiasAlerta(
-  tipoInstrumento?: TipoInstrumento
+  tipoInstrumento?: string
 ): Promise<number> {
   const chave = tipoInstrumento ?? "__default__";
   if (cacheAlertas.has(chave)) return cacheAlertas.get(chave)!;

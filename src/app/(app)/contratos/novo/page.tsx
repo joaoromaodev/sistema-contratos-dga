@@ -1,6 +1,9 @@
 import { ContratoForm } from "../contrato-form";
+import { formOpcoes } from "@/lib/opcoes";
 
-export default function NovoContratoPage() {
+export default async function NovoContratoPage() {
+  const opcoes = await formOpcoes();
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div>
@@ -10,7 +13,7 @@ export default function NovoContratoPage() {
         </p>
       </div>
       <div className="max-w-3xl">
-        <ContratoForm />
+        <ContratoForm opcoes={opcoes} />
       </div>
     </div>
   );

@@ -7,16 +7,16 @@ import { prisma } from "@/lib/prisma";
 import { getUsuarioAtual, podeEditar, podeExcluirOuArquivar } from "@/lib/auth";
 import { proximoCodigoIdentificacao } from "@/lib/contratos";
 import { ContratoFormSchema } from "@/lib/schemas/contrato-schema";
-import { VALORES_POR_TIPO } from "@/lib/constantes-contrato";
-import type { TipoInstrumento, TipoValor } from "@/generated/prisma/enums";
+import { valoresPara } from "@/lib/constantes-contrato";
+import type { TipoValor } from "@/generated/prisma/enums";
 
 export type ContratoFormState = {
   error?: string;
   fieldErrors?: Record<string, string>;
 } | undefined;
 
-function extrairValores(formData: FormData, tipoInstrumento: TipoInstrumento) {
-  const tipos = VALORES_POR_TIPO[tipoInstrumento];
+function extrairValores(formData: FormData, tipoInstrumento: string) {
+  const tipos = valoresPara(tipoInstrumento);
   return tipos.map((tipoValor) => {
     const inicial = formData.get(`valorInicial__${tipoValor}`);
     const atual = formData.get(`valorAtual__${tipoValor}`);
@@ -51,6 +51,31 @@ export async function salvarContrato(
   }
 
   const dados = validado.data;
+
+  const opcoesValidas = await prisma.opcaoLista.findMany({
+    where: {
+      ativo: true,
+      OR: [
+        { categoria: "TIPO_INSTRUMENTO", codigo: dados.tipoInstrumento },
+        { categoria: "INSTRUMENTO_JURIDICO", codigo: dados.instrumentoJuridico },
+        { categoria: "CONTRAPARTE_TIPO", codigo: dados.contraparteTipo },
+      ],
+    },
+  });
+  const faltando: string[] = [];
+  if (!opcoesValidas.some((o) => o.categoria === "TIPO_INSTRUMENTO"))
+    faltando.push("tipoInstrumento");
+  if (!opcoesValidas.some((o) => o.categoria === "INSTRUMENTO_JURIDICO"))
+    faltando.push("instrumentoJuridico");
+  if (!opcoesValidas.some((o) => o.categoria === "CONTRAPARTE_TIPO"))
+    faltando.push("contraparteTipo");
+  if (faltando.length) {
+    return {
+      error: "Uma das opções selecionadas não existe mais ou foi desativada. Recarregue a página.",
+      fieldErrors: Object.fromEntries(faltando.map((f) => [f, "Opção inválida."])),
+    };
+  }
+
   const valores = extrairValores(formData, dados.tipoInstrumento);
 
   const payload = {
@@ -64,6 +89,7 @@ export async function salvarContrato(
     contraparteDocumento: dados.contraparteDocumento || null,
     objeto: dados.objeto,
     modalidadeLicitacao: dados.modalidadeLicitacao || null,
+    numeroLicitacao: dados.numeroLicitacao || null,
     dataInicioVigencia: new Date(dados.dataInicioVigencia),
     dataFimVigenciaAtual: new Date(dados.dataFimVigenciaAtual),
     publicacaoDiarioOficial: dados.publicacaoDiarioOficial
@@ -117,6 +143,20 @@ export async function arquivarContrato(id: string) {
 
   revalidatePath("/contratos");
   revalidatePath(`/contratos/${id}`);
+}
+
+/** Exclusão permanente - diferente de arquivarContrato (que só encerra/reativa).
+ * Usada a partir do diálogo de confirmação na tela de detalhe. */
+export async function excluirContrato(id: string) {
+  const usuario = await getUsuarioAtual();
+  if (!podeExcluirOuArquivar(usuario.papel)) {
+    throw new Error("Você não tem permissão para excluir contratos.");
+  }
+
+  await prisma.contrato.delete({ where: { id } });
+
+  revalidatePath("/contratos");
+  redirect("/contratos");
 }
 
 export type AditivoFormState = { error?: string } | undefined;

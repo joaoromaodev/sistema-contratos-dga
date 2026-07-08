@@ -41,10 +41,4 @@ export const getUsuarioAtual = cache(async (): Promise<UsuarioAtual> => {
   return usuario;
 });
 
-export function podeEditar(papel: PapelUsuario) {
-  return papel === "COORDENADOR_CCON" || papel === "TECNICO_CCON";
-}
-
-export function podeExcluirOuArquivar(papel: PapelUsuario) {
-  return papel === "COORDENADOR_CCON";
-}
+export { podeEditar, podeExcluirOuArquivar, podeGerenciarSistema } from "@/lib/permissoes";

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { buscarContratoPorId } from "@/lib/contratos";
+import { formOpcoes } from "@/lib/opcoes";
 import { ContratoForm } from "../../contrato-form";
 
 export default async function EditarContratoPage({
@@ -9,7 +10,10 @@ export default async function EditarContratoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const contrato = await buscarContratoPorId(id);
+  const [contrato, opcoes] = await Promise.all([
+    buscarContratoPorId(id),
+    formOpcoes(),
+  ]);
 
   if (!contrato) notFound();
 
@@ -17,11 +21,12 @@ export default async function EditarContratoPage({
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Editar Contrato · {contrato.codigoIdentificacao}
+          Editar Contrato{contrato.numeroInstrumento ? ` · ${contrato.numeroInstrumento}` : ""}
         </h1>
       </div>
       <div className="max-w-3xl">
         <ContratoForm
+          opcoes={opcoes}
           initialValues={{
             id: contrato.id,
             tipoInstrumento: contrato.tipoInstrumento,
@@ -34,6 +39,7 @@ export default async function EditarContratoPage({
             contraparteDocumento: contrato.contraparteDocumento,
             objeto: contrato.objeto,
             modalidadeLicitacao: contrato.modalidadeLicitacao,
+            numeroLicitacao: contrato.numeroLicitacao,
             dataInicioVigencia: contrato.dataInicioVigencia.toISOString(),
             dataFimVigenciaAtual: contrato.dataFimVigenciaAtual.toISOString(),
             publicacaoDiarioOficial:

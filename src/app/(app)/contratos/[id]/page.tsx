@@ -9,14 +9,11 @@ import { getDiasAlerta, calcularStatusVigencia } from "@/lib/status";
 import { getUsuarioAtual, podeEditar, podeExcluirOuArquivar } from "@/lib/auth";
 import { StatusBadge } from "@/components/contratos/status-badge";
 import { formatarData, formatarMoeda } from "@/lib/formatters";
-import {
-  TIPO_INSTRUMENTO_LABEL,
-  INSTRUMENTO_JURIDICO_LABEL,
-  CONTRAPARTE_TIPO_LABEL,
-  TIPO_VALOR_LABEL,
-} from "@/lib/constantes-contrato";
+import { TIPO_VALOR_LABEL } from "@/lib/constantes-contrato";
+import { mapasRotulosTodos } from "@/lib/opcoes";
 import { arquivarContrato } from "../actions";
 import { AditivoPanel } from "./aditivo-panel";
+import { ExcluirContratoDialog } from "./excluir-dialog";
 
 function Campo({ label, valor }: { label: string; valor?: string | null }) {
   return (
@@ -33,9 +30,10 @@ export default async function ContratoDetalhePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [contrato, usuario] = await Promise.all([
+  const [contrato, usuario, rotulos] = await Promise.all([
     buscarContratoPorId(id),
     getUsuarioAtual(),
+    mapasRotulosTodos(),
   ]);
 
   if (!contrato) notFound();
@@ -54,15 +52,17 @@ export default async function ContratoDetalhePage({
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs text-muted-foreground">
-            {contrato.codigoIdentificacao}
-          </p>
+          {contrato.numeroInstrumento && (
+            <p className="font-mono text-xs text-muted-foreground">
+              {contrato.numeroInstrumento}
+            </p>
+          )}
           <h1 className="text-2xl font-semibold tracking-tight">
             {contrato.contraparteNome}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {TIPO_INSTRUMENTO_LABEL[contrato.tipoInstrumento]} ·{" "}
-            {INSTRUMENTO_JURIDICO_LABEL[contrato.instrumentoJuridico]}
+            {rotulos.tipoInstrumento[contrato.tipoInstrumento] ?? contrato.tipoInstrumento} ·{" "}
+            {rotulos.instrumentoJuridico[contrato.instrumentoJuridico] ?? contrato.instrumentoJuridico}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -73,11 +73,11 @@ export default async function ContratoDetalhePage({
           />
           {podeEditarContrato && (
             <Button
-            variant="outline"
-            size="sm"
-            render={<Link href={`/contratos/${id}/editar`} />}
-            nativeButton={false}
-          >
+              variant="outline"
+              size="sm"
+              render={<Link href={`/contratos/${id}/editar`} />}
+              nativeButton={false}
+            >
               <Pencil />
               Editar
             </Button>
@@ -97,6 +97,12 @@ export default async function ContratoDetalhePage({
               </Button>
             </form>
           )}
+          {podeArquivar && (
+            <ExcluirContratoDialog
+              contratoId={id}
+              contraparteNome={contrato.contraparteNome}
+            />
+          )}
         </div>
       </div>
 
@@ -111,11 +117,19 @@ export default async function ContratoDetalhePage({
           />
           <Campo label="Nº do contrato/termo/acordo" valor={contrato.numeroInstrumento} />
           <Campo
-            label="Tipo de contraparte"
-            valor={CONTRAPARTE_TIPO_LABEL[contrato.contraparteTipo]}
+            label="Tipo de credor"
+            valor={rotulos.contraparteTipo[contrato.contraparteTipo] ?? contrato.contraparteTipo}
           />
           <Campo label="CNPJ/CPF" valor={contrato.contraparteDocumento} />
-          <Campo label="Modalidade de licitação" valor={contrato.modalidadeLicitacao} />
+          <Campo
+            label="Modalidade de licitação"
+            valor={
+              contrato.modalidadeLicitacao
+                ? (rotulos.modalidadeLicitacao[contrato.modalidadeLicitacao] ?? contrato.modalidadeLicitacao)
+                : null
+            }
+          />
+          <Campo label="Número da licitação" valor={contrato.numeroLicitacao} />
           <Campo
             label="Publicação no Diário Oficial"
             valor={contrato.publicacaoDiarioOficial ? formatarData(contrato.publicacaoDiarioOficial) : null}

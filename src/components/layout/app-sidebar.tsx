@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, LayoutDashboard } from "lucide-react";
+import { FileText, LayoutDashboard, Settings, Users } from "lucide-react";
 
 import {
   Sidebar,
@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { podeGerenciarSistema } from "@/lib/permissoes";
 import type { UsuarioAtual } from "@/lib/auth";
 
 const NAV_ITEMS = [
@@ -23,8 +24,16 @@ const NAV_ITEMS = [
   { href: "/contratos", label: "Contratos e Convênios", icon: FileText },
 ];
 
+const NAV_ITEMS_COORDENADOR = [
+  { href: "/usuarios", label: "Usuários", icon: Users },
+  { href: "/configuracoes", label: "Configurações", icon: Settings },
+];
+
 export function AppSidebar({ usuario }: { usuario: UsuarioAtual }) {
   const pathname = usePathname();
+  const itens = podeGerenciarSistema(usuario.papel)
+    ? [...NAV_ITEMS, ...NAV_ITEMS_COORDENADOR]
+    : NAV_ITEMS;
 
   return (
     <Sidebar collapsible="icon">
@@ -41,7 +50,7 @@ export function AppSidebar({ usuario }: { usuario: UsuarioAtual }) {
           <SidebarGroupLabel>Módulo</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => (
+              {itens.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     isActive={

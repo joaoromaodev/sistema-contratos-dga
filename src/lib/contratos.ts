@@ -2,7 +2,6 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getDiasAlerta } from "@/lib/status";
 import type { Prisma } from "@/generated/prisma/client";
-import type { TipoInstrumento } from "@/generated/prisma/enums";
 
 export type Categoria = "contratos" | "convenios";
 export type StatusFiltro = "VIGENTE" | "PROXIMO_A_VENCER" | "VENCIDO" | "ENCERRADO";
@@ -10,7 +9,7 @@ export type OrdenarPor = "vigencia" | "valor" | "contraparte" | "recente";
 
 export type FiltrosContrato = {
   categoria?: Categoria;
-  tipoInstrumento?: TipoInstrumento;
+  tipoInstrumento?: string;
   busca?: string;
   status?: StatusFiltro;
   ordenarPor?: OrdenarPor;

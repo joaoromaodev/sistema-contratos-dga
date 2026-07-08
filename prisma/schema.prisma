@@ -14,28 +14,6 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
-/// As 8 categorias de instrumento geridas pelo CCON
-enum TipoInstrumento {
-  AQUISICAO
-  EMPREITADA_GLOBAL
-  LOCACAO_IMOVEL
-  PRESTACAO_SERVICOS
-  CESSAO_RECIPROCA
-  ENGENHARIA_DIVERSOS
-  PARCERIA_ENTIDADE_PUBLICA
-  PARCERIA_OSC
-}
-
-/// Natureza jurídica do instrumento - determina a legislação aplicável e os
-/// filtros de alto nível ("Contratos" x "Convênios e Parcerias")
-enum InstrumentoJuridico {
-  CONTRATO_ADMINISTRATIVO
-  CONVENIO
-  ACORDO_COOPERACAO_TECNICA
-  TERMO_EXECUCAO_DESCENTRALIZADA
-  TERMO_PARCERIA
-}
-
 /// De onde vem a numeração do instrumento: processo formal (SEI/PAE) ou
 /// demanda direta do Gabinete do Secretário sem processo aberto (ex: "001 GAB")
 enum OrigemNumero {
@@ -43,12 +21,16 @@ enum OrigemNumero {
   GABINETE
 }
 
-enum ContraparteTipo {
-  PESSOA_JURIDICA_PRIVADA
-  PESSOA_FISICA
-  MUNICIPIO
-  ORGAO_PUBLICO
-  OSC
+/// Categorias de listas configuráveis pela tela de Configurações (model
+/// OpcaoLista abaixo). tipoInstrumento, instrumentoJuridico, contraparteTipo
+/// e modalidadeLicitacao do Contrato guardam o `codigo` de uma OpcaoLista,
+/// não um enum fixo - o Coordenador pode adicionar/renomear/desativar opções
+/// sem precisar de deploy de código.
+enum CategoriaOpcao {
+  TIPO_INSTRUMENTO
+  INSTRUMENTO_JURIDICO
+  CONTRAPARTE_TIPO
+  MODALIDADE_LICITACAO
 }
 
 /// Situação vigente/próximo a vencer/vencido é CALCULADA dinamicamente a
@@ -104,22 +86,23 @@ model Usuario {
 model Contrato {
   id                    String                 @id @default(cuid())
   numeroSequencial      Int                     @default(autoincrement())
-  codigoIdentificacao   String                  @unique // ex: CCON-2026-0001
+  codigoIdentificacao   String                  @unique // ex: CCON-2026-0001 (uso interno/BD, não exibido na listagem)
 
-  tipoInstrumento       TipoInstrumento
-  instrumentoJuridico   InstrumentoJuridico
+  tipoInstrumento       String // codigo de OpcaoLista (categoria TIPO_INSTRUMENTO)
+  instrumentoJuridico   String // codigo de OpcaoLista (categoria INSTRUMENTO_JURIDICO)
 
   origemNumero          OrigemNumero
   numeroProcesso        String // aceita "2021/940713" (processo) ou "001 GAB" (gabinete)
   numeroInstrumento     String?
 
-  contraparteNome       String
+  contraparteNome       String // credor: contratada/locador/município/entidade/OSC
   contraparteDocumento  String? // CNPJ ou CPF
-  contraparteTipo       ContraparteTipo
+  contraparteTipo       String // codigo de OpcaoLista (categoria CONTRAPARTE_TIPO)
 
   objeto                String
 
-  modalidadeLicitacao   String? // N/A para convênios/parcerias
+  modalidadeLicitacao   String? // codigo de OpcaoLista (categoria MODALIDADE_LICITACAO) - N/A para convênios/parcerias
+  numeroLicitacao       String? // ex: "010/2026"
 
   dataInicioVigencia    DateTime
   dataFimVigenciaAtual  DateTime
@@ -205,10 +188,26 @@ model HistoricoAlteracao {
 /// Configuração dos limiares de alerta de vencimento, editável na interface
 /// por Coordenador/Diretor. tipoInstrumento nulo = configuração padrão global.
 model ConfiguracaoAlerta {
-  id              String           @id @default(cuid())
-  tipoInstrumento TipoInstrumento?
-  diasAlerta      Int              @default(150)
+  id              String   @id @default(cuid())
+  tipoInstrumento String?
+  diasAlerta      Int      @default(150)
 
   @@unique([tipoInstrumento])
   @@map("configuracoes_alerta")
+}
+
+/// Listas configuráveis pela tela de Configurações (tipo de instrumento,
+/// natureza jurídica, tipo de credor, modalidade de licitação). Permite ao
+/// Coordenador adicionar/renomear/desativar opções sem deploy de código.
+model OpcaoLista {
+  id        String         @id @default(cuid())
+  categoria CategoriaOpcao
+  codigo    String
+  rotulo    String
+  ativo     Boolean        @default(true)
+  ordem     Int            @default(0)
+  criadoEm  DateTime       @default(now())
+
+  @@unique([categoria, codigo])
+  @@map("opcoes_lista")
 }
