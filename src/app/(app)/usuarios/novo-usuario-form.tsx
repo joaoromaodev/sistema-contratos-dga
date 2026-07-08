@@ -78,6 +78,7 @@ export function NovoUsuarioForm() {
                 <option value="TECNICO_CCON">Técnico CCON</option>
                 <option value="COORDENADOR_CCON">Coordenador CCON</option>
                 <option value="DIRETOR">Diretor</option>
+                <option value="CONSULTA">Consulta (somente visualização)</option>
               </NativeSelect>
             </div>
             {state?.error && (

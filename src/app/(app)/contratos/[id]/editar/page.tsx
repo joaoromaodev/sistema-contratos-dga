@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { buscarContratoPorId } from "@/lib/contratos";
 import { formOpcoes } from "@/lib/opcoes";
+import { getUsuarioAtual, podeEditar } from "@/lib/auth";
 import { ContratoForm } from "../../contrato-form";
 
 export default async function EditarContratoPage({
@@ -10,10 +11,15 @@ export default async function EditarContratoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [contrato, opcoes] = await Promise.all([
+  const [usuario, contrato, opcoes] = await Promise.all([
+    getUsuarioAtual(),
     buscarContratoPorId(id),
     formOpcoes(),
   ]);
+
+  if (!podeEditar(usuario.papel)) {
+    redirect(`/contratos/${id}`);
+  }
 
   if (!contrato) notFound();
 

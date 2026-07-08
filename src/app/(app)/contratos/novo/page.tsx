@@ -1,7 +1,15 @@
+import { redirect } from "next/navigation";
+
 import { ContratoForm } from "../contrato-form";
 import { formOpcoes } from "@/lib/opcoes";
+import { getUsuarioAtual, podeEditar } from "@/lib/auth";
 
 export default async function NovoContratoPage() {
+  const usuario = await getUsuarioAtual();
+  if (!podeEditar(usuario.papel)) {
+    redirect("/contratos");
+  }
+
   const opcoes = await formOpcoes();
 
   return (

@@ -61,6 +61,7 @@ enum PapelUsuario {
   DIRETOR
   COORDENADOR_CCON
   TECNICO_CCON
+  CONSULTA
 }
 
 // ---------------------------------------------------------------------------
