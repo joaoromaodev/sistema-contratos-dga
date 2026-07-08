@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getUsuarioAtual, podeGerenciarSistema } from "@/lib/auth";
+import { getUsuarioAtual, podeGerenciarConfiguracoes } from "@/lib/auth";
 import type { CategoriaOpcao } from "@/generated/prisma/enums";
 
 function slugify(texto: string) {
@@ -16,7 +16,7 @@ function slugify(texto: string) {
 
 async function checarPermissao() {
   const usuario = await getUsuarioAtual();
-  if (!podeGerenciarSistema(usuario.papel)) {
+  if (!podeGerenciarConfiguracoes(usuario.papel)) {
     throw new Error("Você não tem permissão para gerenciar as configurações do sistema.");
   }
 }

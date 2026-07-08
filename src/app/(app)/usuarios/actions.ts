@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getUsuarioAtual } from "@/lib/auth";
-import { podeGerenciarSistema } from "@/lib/permissoes";
+import { podeGerenciarUsuarios } from "@/lib/permissoes";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PapelUsuario } from "@/generated/prisma/enums";
 
 async function checarPermissao() {
   const usuario = await getUsuarioAtual();
-  if (!podeGerenciarSistema(usuario.papel)) {
+  if (!podeGerenciarUsuarios(usuario.papel)) {
     throw new Error("Você não tem permissão para gerenciar usuários.");
   }
   return usuario;

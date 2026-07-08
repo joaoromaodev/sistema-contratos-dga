@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getUsuarioAtual, podeGerenciarSistema } from "@/lib/auth";
+import { getUsuarioAtual, podeGerenciarConfiguracoes } from "@/lib/auth";
 import { listarOpcoes, contarUsoOpcao } from "@/lib/opcoes";
 import { CATEGORIA_OPCAO_LABEL } from "@/lib/constantes-contrato";
 import {
@@ -22,7 +22,7 @@ const CATEGORIAS: CategoriaOpcao[] = [
 
 export default async function ConfiguracoesPage() {
   const usuario = await getUsuarioAtual();
-  if (!podeGerenciarSistema(usuario.papel)) {
+  if (!podeGerenciarConfiguracoes(usuario.papel)) {
     redirect("/");
   }
 

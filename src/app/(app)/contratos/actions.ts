@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { getUsuarioAtual, podeEditar, podeExcluirOuArquivar } from "@/lib/auth";
+import { getUsuarioAtual, podeEditar, podeArquivar, podeExcluirContrato } from "@/lib/auth";
 import { proximoCodigoIdentificacao } from "@/lib/contratos";
 import { ContratoFormSchema } from "@/lib/schemas/contrato-schema";
 import { valoresPara } from "@/lib/constantes-contrato";
@@ -130,7 +130,7 @@ export async function salvarContrato(
 
 export async function arquivarContrato(id: string) {
   const usuario = await getUsuarioAtual();
-  if (!podeExcluirOuArquivar(usuario.papel)) {
+  if (!podeArquivar(usuario.papel)) {
     throw new Error("Você não tem permissão para encerrar/arquivar contratos.");
   }
   const contrato = await prisma.contrato.findUniqueOrThrow({ where: { id } });
@@ -149,7 +149,7 @@ export async function arquivarContrato(id: string) {
  * Usada a partir do diálogo de confirmação na tela de detalhe. */
 export async function excluirContrato(id: string) {
   const usuario = await getUsuarioAtual();
-  if (!podeExcluirOuArquivar(usuario.papel)) {
+  if (!podeExcluirContrato(usuario.papel)) {
     throw new Error("Você não tem permissão para excluir contratos.");
   }
 

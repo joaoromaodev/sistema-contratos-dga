@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buscarContratoPorId } from "@/lib/contratos";
 import { getDiasAlerta, calcularStatusVigencia } from "@/lib/status";
-import { getUsuarioAtual, podeEditar, podeExcluirOuArquivar } from "@/lib/auth";
+import { getUsuarioAtual, podeEditar, podeArquivar, podeExcluirContrato } from "@/lib/auth";
 import { StatusBadge } from "@/components/contratos/status-badge";
 import { formatarData, formatarMoeda } from "@/lib/formatters";
 import { TIPO_VALOR_LABEL } from "@/lib/constantes-contrato";
@@ -46,7 +46,8 @@ export default async function ContratoDetalhePage({
   );
 
   const podeEditarContrato = podeEditar(usuario.papel);
-  const podeArquivar = podeExcluirOuArquivar(usuario.papel);
+  const podeArquivarContrato = podeArquivar(usuario.papel);
+  const podeExcluirEsteContrato = podeExcluirContrato(usuario.papel);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
@@ -82,7 +83,7 @@ export default async function ContratoDetalhePage({
               Editar
             </Button>
           )}
-          {podeArquivar && (
+          {podeArquivarContrato && (
             <form action={arquivarContrato.bind(null, id)}>
               <Button variant="outline" size="sm" type="submit">
                 {contrato.situacaoAdministrativa === "ATIVO" ? (
@@ -97,7 +98,7 @@ export default async function ContratoDetalhePage({
               </Button>
             </form>
           )}
-          {podeArquivar && (
+          {podeExcluirEsteContrato && (
             <ExcluirContratoDialog
               contratoId={id}
               contraparteNome={contrato.contraparteNome}

@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { podeGerenciarSistema } from "@/lib/permissoes";
+import { podeGerenciarUsuarios, podeGerenciarConfiguracoes } from "@/lib/permissoes";
 import { logout } from "@/lib/actions/logout";
 import type { UsuarioAtual } from "@/lib/auth";
 
@@ -26,16 +26,17 @@ const NAV_ITEMS = [
   { href: "/contratos", label: "Contratos e Convênios", icon: FileText },
 ];
 
-const NAV_ITEMS_COORDENADOR = [
-  { href: "/usuarios", label: "Usuários", icon: Users },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
-];
-
 export function AppSidebar({ usuario }: { usuario: UsuarioAtual }) {
   const pathname = usePathname();
-  const itens = podeGerenciarSistema(usuario.papel)
-    ? [...NAV_ITEMS, ...NAV_ITEMS_COORDENADOR]
-    : NAV_ITEMS;
+  const itens = [
+    ...NAV_ITEMS,
+    ...(podeGerenciarUsuarios(usuario.papel)
+      ? [{ href: "/usuarios", label: "Usuários", icon: Users }]
+      : []),
+    ...(podeGerenciarConfiguracoes(usuario.papel)
+      ? [{ href: "/configuracoes", label: "Configurações", icon: Settings }]
+      : []),
+  ];
 
   return (
     <Sidebar collapsible="icon">

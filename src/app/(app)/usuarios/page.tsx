@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getUsuarioAtual } from "@/lib/auth";
-import { podeGerenciarSistema } from "@/lib/permissoes";
+import { podeGerenciarUsuarios } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NovoUsuarioForm } from "./novo-usuario-form";
@@ -9,7 +9,7 @@ import { UsuariosLista } from "./usuarios-lista";
 
 export default async function UsuariosPage() {
   const usuarioAtual = await getUsuarioAtual();
-  if (!podeGerenciarSistema(usuarioAtual.papel)) {
+  if (!podeGerenciarUsuarios(usuarioAtual.papel)) {
     redirect("/");
   }
 

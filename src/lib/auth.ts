@@ -41,4 +41,10 @@ export const getUsuarioAtual = cache(async (): Promise<UsuarioAtual> => {
   return usuario;
 });
 
-export { podeEditar, podeExcluirOuArquivar, podeGerenciarSistema } from "@/lib/permissoes";
+export {
+  podeEditar,
+  podeArquivar,
+  podeExcluirContrato,
+  podeGerenciarUsuarios,
+  podeGerenciarConfiguracoes,
+} from "@/lib/permissoes";
