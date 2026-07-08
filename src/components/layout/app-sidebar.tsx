@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, LayoutDashboard, Settings, Users } from "lucide-react";
+import { FileText, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
 
 import {
   Sidebar,
@@ -16,7 +16,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { podeGerenciarSistema } from "@/lib/permissoes";
+import { logout } from "@/lib/actions/logout";
 import type { UsuarioAtual } from "@/lib/auth";
 
 const NAV_ITEMS = [
@@ -71,12 +73,26 @@ export function AppSidebar({ usuario }: { usuario: UsuarioAtual }) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t px-3 py-3 group-data-[collapsible=icon]:hidden">
-        <p className="truncate text-xs text-muted-foreground">
-          {usuario.nome}
-        </p>
-        <p className="text-[11px] text-muted-foreground/70">
-          {usuario.papel.replace(/_/g, " ")}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-xs text-muted-foreground">
+              {usuario.nome}
+            </p>
+            <p className="text-[11px] text-muted-foreground/70">
+              {usuario.papel.replace(/_/g, " ")}
+            </p>
+          </div>
+          <form action={logout}>
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon-sm"
+              title="Sair da conta"
+            >
+              <LogOut />
+            </Button>
+          </form>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

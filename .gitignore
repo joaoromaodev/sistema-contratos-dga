@@ -48,3 +48,6 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# claude code session runtime files
+.claude/scheduled_tasks.lock
