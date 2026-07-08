@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Loader2, Plus, Check } from "lucide-react";
+import { Loader2, Plus, Check, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { criarOpcao, editarOpcao, alternarAtivoOpcao } from "./actions";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { criarOpcao, editarOpcao, alternarAtivoOpcao, excluirOpcao } from "./actions";
 import type { CategoriaOpcao } from "@/generated/prisma/enums";
 
 type Opcao = {
@@ -14,6 +15,7 @@ type Opcao = {
   codigo: string;
   rotulo: string;
   ativo: boolean;
+  emUso: number;
 };
 
 function LinhaOpcao({ opcao }: { opcao: Opcao }) {
@@ -60,6 +62,36 @@ function LinhaOpcao({ opcao }: { opcao: Opcao }) {
       >
         {opcao.ativo ? "Desativar" : "Ativar"}
       </Button>
+      <ConfirmDialog
+        trigger={
+          <Button size="icon-sm" variant="destructive" disabled={pending}>
+            <Trash2 />
+          </Button>
+        }
+        title="Excluir opção permanentemente?"
+        description={
+          opcao.emUso > 0 ? (
+            <>
+              Tem certeza que deseja excluir <strong>{opcao.rotulo}</strong>?{" "}
+              <strong>
+                {opcao.emUso} contrato{opcao.emUso === 1 ? "" : "s"} já
+                cadastrado{opcao.emUso === 1 ? "" : "s"} usa{opcao.emUso === 1 ? "" : "m"}{" "}
+                essa opção
+              </strong>{" "}
+              e passará{opcao.emUso === 1 ? "" : "ão"} a mostrar o código bruto
+              em vez do nome. Se a intenção é só parar de oferecer essa opção
+              em novos cadastros, prefira &quot;Desativar&quot;.
+            </>
+          ) : (
+            <>
+              Tem certeza que deseja excluir <strong>{opcao.rotulo}</strong>?
+              Essa ação não pode ser desfeita.
+            </>
+          )
+        }
+        confirmLabel="Sim, excluir"
+        onConfirm={() => excluirOpcao(opcao.id)}
+      />
     </div>
   );
 }

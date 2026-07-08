@@ -115,11 +115,11 @@ model Contrato {
 
   criadoEm   DateTime @default(now())
   criadoPorId String?
-  criadoPor   Usuario? @relation("ContratoCriadoPor", fields: [criadoPorId], references: [id])
+  criadoPor   Usuario? @relation("ContratoCriadoPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
 
   atualizadoEm     DateTime @updatedAt
   atualizadoPorId  String?
-  atualizadoPor    Usuario? @relation("ContratoAtualizadoPor", fields: [atualizadoPorId], references: [id])
+  atualizadoPor    Usuario? @relation("ContratoAtualizadoPor", fields: [atualizadoPorId], references: [id], onDelete: SetNull)
 
   valores             ContratoValor[]
   aditivos            Aditivo[]
@@ -173,7 +173,7 @@ model HistoricoAlteracao {
   contrato       Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
 
   usuarioId      String?
-  usuario        Usuario? @relation(fields: [usuarioId], references: [id])
+  usuario        Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   campoAlterado  String
   valorAnterior  String?

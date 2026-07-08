@@ -9,6 +9,19 @@ export async function listarOpcoes(categoria: CategoriaOpcao, apenasAtivas = tru
   });
 }
 
+const CAMPO_POR_CATEGORIA: Record<CategoriaOpcao, string> = {
+  TIPO_INSTRUMENTO: "tipoInstrumento",
+  INSTRUMENTO_JURIDICO: "instrumentoJuridico",
+  CONTRAPARTE_TIPO: "contraparteTipo",
+  MODALIDADE_LICITACAO: "modalidadeLicitacao",
+};
+
+/** Quantos contratos usam esse código - usado para avisar antes de excluir uma opção. */
+export async function contarUsoOpcao(categoria: CategoriaOpcao, codigo: string) {
+  const campo = CAMPO_POR_CATEGORIA[categoria];
+  return prisma.contrato.count({ where: { [campo]: codigo } });
+}
+
 export async function mapaRotulos(categoria: CategoriaOpcao): Promise<Record<string, string>> {
   const opcoes = await listarOpcoes(categoria, false);
   return Object.fromEntries(opcoes.map((o) => [o.codigo, o.rotulo]));

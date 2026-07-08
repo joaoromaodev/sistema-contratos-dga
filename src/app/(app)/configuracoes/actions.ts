@@ -69,3 +69,12 @@ export async function alternarAtivoOpcao(id: string) {
   });
   revalidatePath("/configuracoes");
 }
+
+/** Exclusão permanente da opção. Contratos que já usam esse código continuam
+ * gravados com ele, só passam a exibir o código bruto em vez do rótulo. */
+export async function excluirOpcao(id: string) {
+  await checarPermissao();
+
+  await prisma.opcaoLista.delete({ where: { id } });
+  revalidatePath("/configuracoes");
+}

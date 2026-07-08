@@ -93,3 +93,25 @@ export async function alternarAtivoUsuario(id: string) {
   });
   revalidatePath("/usuarios");
 }
+
+/** Exclusão permanente do usuário (login + cadastro). Contratos que ele
+ * criou/atualizou são preservados - só perdem a referência (SetNull). */
+export async function excluirUsuario(id: string) {
+  const usuarioAtual = await checarPermissao();
+
+  if (usuarioAtual.id === id) {
+    throw new Error("Você não pode excluir seu próprio usuário.");
+  }
+
+  const usuario = await prisma.usuario.findUniqueOrThrow({ where: { id } });
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(usuario.authId);
+  if (error) {
+    throw new Error(`Erro ao excluir login no Supabase Auth: ${error.message}`);
+  }
+
+  await prisma.usuario.delete({ where: { id } });
+
+  revalidatePath("/usuarios");
+}

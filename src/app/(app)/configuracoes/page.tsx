@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getUsuarioAtual, podeGerenciarSistema } from "@/lib/auth";
-import { listarOpcoes } from "@/lib/opcoes";
+import { listarOpcoes, contarUsoOpcao } from "@/lib/opcoes";
 import { CATEGORIA_OPCAO_LABEL } from "@/lib/constantes-contrato";
 import {
   Tabs,
@@ -28,6 +28,14 @@ export default async function ConfiguracoesPage() {
 
   const listas = await Promise.all(
     CATEGORIAS.map((categoria) => listarOpcoes(categoria, false))
+  );
+
+  const usos = await Promise.all(
+    listas.map((lista, i) =>
+      Promise.all(
+        lista.map((o) => contarUsoOpcao(CATEGORIAS[i], o.codigo))
+      )
+    )
   );
 
   return (
@@ -60,7 +68,10 @@ export default async function ConfiguracoesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <OpcaoListaManager categoria={categoria} opcoes={listas[i]} />
+                <OpcaoListaManager
+                  categoria={categoria}
+                  opcoes={listas[i].map((o, j) => ({ ...o, emUso: usos[i][j] }))}
+                />
               </CardContent>
             </Card>
           </TabsContent>

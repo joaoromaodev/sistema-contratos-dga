@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { editarUsuario, alternarAtivoUsuario } from "./actions";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { editarUsuario, alternarAtivoUsuario, excluirUsuario } from "./actions";
 import type { PapelUsuario } from "@/generated/prisma/enums";
 
 type Usuario = {
@@ -93,6 +94,28 @@ function LinhaUsuario({
           >
             {usuario.ativo ? "Desativar" : "Ativar"}
           </Button>
+        )}
+        {!souEu && (
+          <ConfirmDialog
+            trigger={
+              <Button size="icon-sm" variant="destructive" disabled={pending}>
+                <Trash2 />
+              </Button>
+            }
+            title="Excluir usuário permanentemente?"
+            description={
+              <>
+                Tem certeza que deseja excluir <strong>{usuario.nome}</strong> (
+                {usuario.email})? O login será removido e a pessoa não conseguirá
+                mais acessar o sistema. Contratos que ela cadastrou ou editou são
+                mantidos, apenas sem essa referência. Essa ação não pode ser
+                desfeita — se a intenção é só bloquear o acesso temporariamente,
+                prefira &quot;Desativar&quot;.
+              </>
+            }
+            confirmLabel="Sim, excluir"
+            onConfirm={() => excluirUsuario(usuario.id)}
+          />
         )}
       </TableCell>
     </TableRow>
